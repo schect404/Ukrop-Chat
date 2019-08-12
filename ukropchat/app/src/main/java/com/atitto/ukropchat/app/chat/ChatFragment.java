@@ -86,9 +86,9 @@ public class ChatFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        messages.clear();
         if (!isFromPersistance) viewModel.storeChat(new ChatListItem(id, messages));
         if (id.contains("/")) viewModel.closeSocket(id);
+        messages.clear();
         viewModel.dispose();
     }
 }
