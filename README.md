@@ -16,3 +16,5 @@
 
 - Clean Architecture
 - MVVM
+
+> default port for TCP :8080
