@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Ukrop Chat</string>
+    <string name="tcp_placeholder">TCP IP</string>
+    <string name="upd_placeholder">UDP</string>
+    <string name="connect">Connect</string>
+    <string name="connectUDP">Connect via UDP(only port)</string>
+    <string name="new_message_placeholder">Write your message...</string>
+    <string name="send">Send</string>
+    <string name="my_ip">My ip</string>
+    <string name="port">Port</string>
+
+</resources>

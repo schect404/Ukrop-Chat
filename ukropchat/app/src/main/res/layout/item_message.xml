@@ -1,0 +1,32 @@
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="item"
+            type="com.atitto.domain.entities.Message" />
+    </data>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="3dp"
+        android:background="@drawable/message_item_my"
+        android:maxWidth="200dp"
+        android:padding="8dp"
+        app:isMy="@{item.my}">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:maxWidth="180dp"
+            android:singleLine="false"
+            android:text="@{item.text}"
+            android:textColor="@color/textColorPrimary" />
+
+    </RelativeLayout>
+
+</layout>
