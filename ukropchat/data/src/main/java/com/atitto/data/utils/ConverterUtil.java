@@ -17,7 +17,7 @@ public class ConverterUtil {
 
     public static List<Message> mapRealmMessages(RealmList<RealmMessage> messages) {
         ArrayList<Message> newMessages = new ArrayList<>();
-        messages.forEach( message -> newMessages.add(mapRealmMessage(message)));
+        //messages.forEach( message -> newMessages.add(mapRealmMessage(message)));
         return  newMessages;
     }
 
@@ -27,7 +27,7 @@ public class ConverterUtil {
 
     public static List<ChatListItem> mapRealmChats(ArrayList<RealmChat>  chats) {
         ArrayList<ChatListItem> newChats = new ArrayList<>();
-        chats.forEach(chat -> newChats.add(mapRealmChat(chat)));
+        //chats.forEach(chat -> newChats.add(mapRealmChat(chat)));
         return newChats;
     }
 
@@ -37,7 +37,7 @@ public class ConverterUtil {
 
     public static RealmList<RealmMessage> mapMessages(List<Message> messages) {
         RealmList<RealmMessage> newMessages = new RealmList<>();
-        messages.forEach( message -> newMessages.add(mapMessage(message)));
+        //messages.forEach( message -> newMessages.add(mapMessage(message)));
         return  newMessages;
     }
 

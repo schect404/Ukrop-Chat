@@ -16,8 +16,8 @@ public class DomainModule {
 
     @Provides
     @Singleton
-    SocketUseCase provideSocketUseCase(SocketRepository repository, SocketServer socketServer) {
-        return new SocketUseCaseImpl(repository, socketServer);
+    SocketUseCase provideSocketUseCase(SocketRepository repository) {
+        return new SocketUseCaseImpl(repository);
     }
 
     @Provides

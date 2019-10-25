@@ -12,27 +12,25 @@ import io.reactivex.Observable;
 public class SocketUseCaseImpl implements SocketUseCase {
 
     private SocketRepository socketRepository;
-    private SocketServer socketServer;
 
     @Inject
-    public SocketUseCaseImpl(SocketRepository repository, SocketServer socketServer){
+    public SocketUseCaseImpl(SocketRepository repository){
         this.socketRepository = repository;
-        this.socketServer = socketServer;
     }
 
     @Override
     public Observable<String> getOnError() {
-        return socketServer.getErrorEvent();
+        return socketRepository.getOnSocketError();
     }
 
     @Override
     public Observable<Pair<String, Socket>> getOnConnected() {
-        return socketServer.getConnectedEvent();
+        return socketRepository.getOnConnect();
     }
 
     @Override
     public Observable<String> getOnSocketDisconnected() {
-        return socketServer.getOnSocketDisconnectedEvent();
+        return socketRepository.getOnSocketDisconnected();
     }
 
     @Override
@@ -57,7 +55,7 @@ public class SocketUseCaseImpl implements SocketUseCase {
 
     @Override
     public void startSocketServer() {
-        socketServer.startServerSocket();
+        socketRepository.startSocketServer();
     }
 
     @Override
@@ -93,5 +91,10 @@ public class SocketUseCaseImpl implements SocketUseCase {
     @Override
     public void closeSocket(String ip) {
         socketRepository.closeSocket(ip);
+    }
+
+    @Override
+    public void closeSocket() {
+        socketRepository.closeSocket();
     }
 }

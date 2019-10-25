@@ -1,34 +1,30 @@
 package com.atitto.data.socketudp;
 
+import android.content.Context;
+
+import com.atitto.domain.socket.SocketClientInfo;
 import com.atitto.domain.updsocket.UpdSocket;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 
 public class UdpSocketImpl implements UpdSocket {
 
-    private UpdSocketThread udpSocketThread;
-    private UpdSocketClientThread updSocketClientThread;
+    private Context context;
 
     private PublishSubject<String> onSendMessage = PublishSubject.create();
-    private PublishSubject<String> onNeedToCloseSocket = PublishSubject.create();
 
-    public UdpSocketImpl(int port,
-                         String myIp,
-                         PublishSubject<String> onSocketError,
-                         PublishSubject<String> onMessageReceive,
-                         PublishSubject<String> onMessageReplied) {
-        udpSocketThread = new UpdSocketThread(port, onSendMessage, onSocketError, onNeedToCloseSocket,onMessageReplied);
-        updSocketClientThread = new UpdSocketClientThread(port, myIp, onNeedToCloseSocket, onSocketError, onMessageReceive);
-    }
+    private ExecutorService executorService = Executors.newCachedThreadPool();
 
-    @Override
-    public Observable<String> getOnMessageReceived() {
-        return updSocketClientThread.getOnMessageReceived();
-    }
-
-    @Override
-    public Observable<String> getOnSocketError() {
-        return udpSocketThread.getOnSocketError();
+    public UdpSocketImpl(Context context) {
+        this.context = context;
     }
 
     @Override
@@ -37,13 +33,13 @@ public class UdpSocketImpl implements UpdSocket {
     }
 
     @Override
-    public void connectSocket() {
-        new Thread(udpSocketThread).start();
-        new Thread(updSocketClientThread).start();
-    }
-
-    @Override
-    public void closeSocket() {
-        onNeedToCloseSocket.onNext("");
+    public void connectSocket(SocketClientInfo socketClientInfo, String myIp) {
+        socketClientInfo.setOnSendMessage(onSendMessage);
+        CountDownLatch latch = new CountDownLatch(1);
+        UpdSocketThread udpSocketThread = new UpdSocketThread(socketClientInfo, latch, context);
+        UpdSocketClientThread udpSocketClientThread = new UpdSocketClientThread(socketClientInfo, myIp, latch);
+        executorService.submit(udpSocketThread);
+        executorService.submit(udpSocketClientThread);
+        latch.countDown();
     }
 }

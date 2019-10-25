@@ -32,11 +32,11 @@ class ChatViewModelImpl extends ViewModel implements ChatViewModel {
 
     private SocketUseCase socketUseCase;
     private ChatUseCase chatUseCase;
-    CompositeDisposable disposer = new CompositeDisposable();
+    private CompositeDisposable disposer = new CompositeDisposable();
     private MutableLiveData<Message> newMessageLiveData = new MutableLiveData<>();
 
     @Inject
-    public ChatViewModelImpl(SocketUseCase socketUseCase, ChatUseCase chatUseCase) {
+    ChatViewModelImpl(SocketUseCase socketUseCase, ChatUseCase chatUseCase) {
         this.socketUseCase = socketUseCase;
         this.chatUseCase = chatUseCase;
         subscribeNewMessages();
@@ -55,6 +55,7 @@ class ChatViewModelImpl extends ViewModel implements ChatViewModel {
 
     @Override
     public void dispose() {
+        socketUseCase.closeSocket();
         disposer.dispose();
     }
 

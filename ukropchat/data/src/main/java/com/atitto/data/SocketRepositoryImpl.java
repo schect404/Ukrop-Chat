@@ -6,7 +6,9 @@ import com.atitto.data.socket.SocketClientImpl;
 import com.atitto.data.socketudp.UdpSocketImpl;
 import com.atitto.domain.SocketRepository;
 import com.atitto.domain.socket.SocketClient;
+import com.atitto.domain.socket.SocketClientInfo;
 import com.atitto.domain.socket.SocketServer;
+import com.atitto.domain.socket.SocketServerCallbacks;
 import com.atitto.domain.updsocket.UpdSocket;
 
 import java.net.InetAddress;
@@ -26,14 +28,21 @@ public class SocketRepositoryImpl implements SocketRepository {
     private PublishSubject<String> onSocketReplied = PublishSubject.create();
     private PublishSubject<String> onMessageReceived = PublishSubject.create();
     private PublishSubject<String> onSocketError = PublishSubject.create();
+    private PublishSubject<Pair<String, Socket>> onConnect = PublishSubject.create();
+    private PublishSubject<String> onSocketDisconnected = PublishSubject.create();
+    private PublishSubject<String> onNeedToCloseSocket = PublishSubject.create();
+
     private HashMap<String, Socket> connectedSockets = new HashMap<>();
-    private SocketClient socketClient;
+
     private SocketServer socketServer;
-    private UpdSocket updSocket;
+    private SocketClient socketClient;
+    private UpdSocket udpSocket;
 
     @Inject
-    SocketRepositoryImpl(SocketServer socketServer) {
+    SocketRepositoryImpl(SocketServer socketServer, SocketClient socketClient, UpdSocket udpSocket) {
         this.socketServer = socketServer;
+        this.socketClient = socketClient;
+        this.udpSocket = udpSocket;
     }
 
     @Override
@@ -52,45 +61,29 @@ public class SocketRepositoryImpl implements SocketRepository {
     }
 
     @Override
+    public Observable<Pair<String, Socket>> getOnConnect() {
+        return onConnect;
+    }
+
+    @Override
+    public Observable<String> getOnSocketDisconnected() {
+        return onSocketDisconnected;
+    }
+
+    @Override
     public void sendMessage(String message) {
         try {
-            updSocket.sendMessage(message);
-        } catch (Exception e) {
-            try {
-                socketClient.sendMessage(message);
-            } catch (Exception ex) {
-                onSocketError.onNext(ex.getMessage());
-            }
+            udpSocket.sendMessage(message);
+            socketClient.sendMessage(message);
+        } catch (Exception ex) {
+            onSocketError.onNext(ex.getMessage());
         }
     }
 
     @Override
-    public String getIpAddress(boolean useIPv4) {
-        try {
-            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-            for (NetworkInterface intf : interfaces) {
-                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
-                for (InetAddress addr : addrs) {
-                    if (!addr.isLoopbackAddress()) {
-                        String sAddr = addr.getHostAddress();
-                        //boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
-                        boolean isIPv4 = sAddr.indexOf(':') < 0;
-
-                        if (useIPv4) {
-                            if (isIPv4)
-                                return sAddr;
-                        } else {
-                            if (!isIPv4) {
-                                int delim = sAddr.indexOf('%'); // drop ip6 zone suffix
-                                return delim < 0 ? sAddr.toUpperCase() : sAddr.substring(0, delim).toUpperCase();
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        return "";
+    public void startSocketServer() {
+        SocketServerCallbacks socketServerCallbacks = new SocketServerCallbacks(onSocketError, onConnect, onSocketDisconnected, onMessageReceived);
+        socketServer.startServerSocket(socketServerCallbacks);
     }
 
     @Override
@@ -111,16 +104,13 @@ public class SocketRepositoryImpl implements SocketRepository {
 
     @Override
     public void connectSocket(String ip, String port, Socket defaultSocket) {
-        socketServer.subscribeWith(onMessageReceived);
-        socketClient = new SocketClientImpl(ip, port, defaultSocket, onSocketReplied, onSocketError, onMessageReceived);
-        socketClient.connectSocket();
+        socketClient.connectSocket(new SocketClientInfo(ip, Integer.parseInt(port), defaultSocket, onSocketReplied, onMessageReceived, onSocketError, onNeedToCloseSocket));
     }
 
     @Override
     public void connectByUdp(String port) {
         try {
-            updSocket = new UdpSocketImpl(Integer.parseInt(port), getIpAddress(true), onSocketError, onMessageReceived, onSocketReplied);
-            updSocket.connectSocket();
+            udpSocket.connectSocket(new SocketClientInfo("0.0.0.0", Integer.parseInt(port), null, onSocketReplied, onMessageReceived, onSocketError , onNeedToCloseSocket), getIpAddress(true));
         } catch (Exception e) {
             onSocketError.onNext(e.getMessage());
         }
@@ -129,8 +119,38 @@ public class SocketRepositoryImpl implements SocketRepository {
     @Override
     public void closeSocket(String ip) {
         removeSocket(ip);
-        if(socketClient != null) socketClient.closeSocket();
-        if(updSocket != null) updSocket.closeSocket();
+        onNeedToCloseSocket.onNext("");
+    }
+
+    @Override
+    public void closeSocket() {
+        onNeedToCloseSocket.onNext("");
+    }
+
+    @Override
+    public String getIpAddress(boolean useIPv4) {
+        try {
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface intf : interfaces) {
+                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+                for (InetAddress addr : addrs) {
+                    if (!addr.isLoopbackAddress()) {
+                        String sAddr = addr.getHostAddress();
+                        boolean isIPv4 = sAddr.indexOf(':') < 0;
+                        if (useIPv4) {
+                            if (isIPv4)
+                                return sAddr;
+                        } else {
+                            if (!isIPv4) {
+                                int delim = sAddr.indexOf('%');
+                                return delim < 0 ? sAddr.toUpperCase() : sAddr.substring(0, delim).toUpperCase();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) { }
+        return "";
     }
 
 }

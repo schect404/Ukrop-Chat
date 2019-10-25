@@ -1,13 +1,8 @@
 package com.atitto.domain.updsocket;
 
-import io.reactivex.Observable;
+import com.atitto.domain.socket.SocketClientInfo;
 
 public interface UpdSocket {
-
-    Observable<String> getOnMessageReceived();
-    Observable<String> getOnSocketError();
-
     void sendMessage(String message);
-    void connectSocket();
-    void closeSocket();
+    void connectSocket(SocketClientInfo socketClientInfo, String myIp);
 }

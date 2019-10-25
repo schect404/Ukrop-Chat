@@ -42,6 +42,11 @@ public class MainActivity extends DaggerAppCompatActivity implements ToChatInter
         setContentView(R.layout.activity_main);
         AndroidInjection.inject(this);
 
+        WifiManager wm = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiManager.MulticastLock multicastLock = wm.createMulticastLock("RavnApplication");
+        multicastLock.setReferenceCounted(true);
+        multicastLock.acquire();
+
         mainScreenFragment.setToChatInterface(this);
 
         getSupportFragmentManager().addOnBackStackChangedListener(this);
@@ -56,7 +61,7 @@ public class MainActivity extends DaggerAppCompatActivity implements ToChatInter
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(ip -> socketUseCase.removeSocket(ip)));
 
-        disposer.add(this.socketUseCase.getOnConnected()
+        disposer.add(socketUseCase.getOnConnected()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(socketPair -> {

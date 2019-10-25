@@ -24,4 +24,5 @@ public interface SocketUseCase {
     void connectUdpSocket(String port);
     void sendNewMessage(String text);
     void closeSocket(String ip);
+    void closeSocket();
 }
